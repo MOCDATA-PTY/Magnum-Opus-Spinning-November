@@ -50,10 +50,22 @@
         {% endif %}
     </div>
 
-    <!-- Result Display -->
-    <div id="result" class="mt-8 text-3xl font-bold text-center hidden">
-        <div class="bg-white rounded-xl p-6 shadow-2xl border-4 border-blue-600">
-            <span id="resultText" class="text-blue-900"></span>
+    <!-- Result Display Modal -->
+    <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-2xl p-10 max-w-md mx-4 text-center transform transition-all">
+            <div class="mb-6">
+                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-normal text-gray-800 mb-2">Congratulations!</h2>
+                <p id="resultText" class="text-lg text-gray-600 mb-6"></p>
+                <p class="text-sm text-gray-500">Your team assignment is now permanent.</p>
+            </div>
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 transition-colors duration-150">
+                View Dashboard
+            </button>
         </div>
     </div>
 </div>
@@ -84,8 +96,8 @@
     const userTeam = {{ user_team|default:"null" }};
 
     const canvas = document.getElementById('wheelCanvas');
-    const ctx = canvas.getContext('2d');
-    const result = document.getElementById('result');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    const resultModal = document.getElementById('resultModal');
     const resultText = document.getElementById('resultText');
 
     // Blue and white color scheme - will be populated with available teams
@@ -290,7 +302,7 @@
         if (isSpinning || hasTeam) return;
 
         initAudio();
-        result.classList.add('hidden');
+        resultModal.classList.add('hidden');
 
         // Random initial velocity for the spin
         angularVelocity = 20 + Math.random() * 10; // Random speed between 20-30
@@ -326,19 +338,17 @@
                 const winningSegment = segments[winningSegmentIndex];
                 const winningTeamNumber = winningSegment.number; // Use the actual team number
 
-                resultText.textContent = `You have been assigned to ${winningSegment.name}!`;
-                result.classList.remove('hidden');
-
                 // Save team assignment to database
                 saveTeamAssignment(winningTeamNumber);
 
                 isSpinning = false;
                 angularVelocity = 0;
 
-                // Reload page after 3 seconds to show the assigned team
+                // Show congratulations modal after a brief delay
                 setTimeout(() => {
-                    location.reload();
-                }, 3000);
+                    resultText.textContent = `You have been assigned to ${winningSegment.name}!`;
+                    resultModal.classList.remove('hidden');
+                }, 500);
             }
         }
 
@@ -347,20 +357,22 @@
 
     // Initial setup
     async function init() {
-        // Load available teams
-        const teamsLoaded = await loadAvailableTeams();
+        if (!hasTeam && canvas) {
+            // Load available teams
+            const teamsLoaded = await loadAvailableTeams();
 
-        if (!teamsLoaded || hasTeam) {
-            canvas.style.opacity = '0.6';
-        }
+            if (!teamsLoaded) {
+                canvas.style.opacity = '0.6';
+            }
 
-        // Draw the wheel
-        drawWheel();
+            // Draw the wheel
+            drawWheel();
 
-        // Add spin button event listener
-        const spinButton = document.getElementById('spinButton');
-        if (spinButton && !hasTeam) {
-            spinButton.addEventListener('click', handleSpinButtonClick);
+            // Add spin button event listener
+            const spinButton = document.getElementById('spinButton');
+            if (spinButton) {
+                spinButton.addEventListener('click', handleSpinButtonClick);
+            }
         }
     }
 
