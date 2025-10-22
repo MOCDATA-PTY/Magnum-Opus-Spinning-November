@@ -22,6 +22,7 @@
     </div>
 
     <!-- Spinning Wheel Container -->
+    {% if not has_team %}
     <div class="relative mb-8">
         <!-- Wheel using Canvas -->
         <canvas id="wheelCanvas" width="500" height="500" class="mx-auto rounded-full shadow-2xl"></canvas>
@@ -33,11 +34,15 @@
             </svg>
         </div>
     </div>
+    {% endif %}
 
     <!-- Spin Button -->
     <div class="text-center mt-6">
         {% if has_team %}
-        <p class="text-lg text-gray-500 font-semibold">You have already been assigned to a team</p>
+        <div class="bg-white border border-gray-200 shadow-sm p-8 rounded max-w-md mx-auto">
+            <h2 class="text-xl font-normal text-gray-800 mb-2">Team Assignment Complete</h2>
+            <p class="text-sm text-gray-600">You cannot spin again. Your team assignment is permanent.</p>
+        </div>
         {% else %}
         <button id="spinButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition duration-300">
             SPIN
