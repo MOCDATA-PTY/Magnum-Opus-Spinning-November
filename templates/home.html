@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Spinner{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col items-center justify-center p-4">
+    <!-- Header -->
+    <div class="absolute top-4 right-4">
+        <a href="{% url 'logout' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300 shadow-lg font-semibold">
+            Logout
+        </a>
+    </div>
+
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-blue-900 mb-2">Team Spinner</h1>
+        <p class="text-xl text-blue-600">Welcome, {{ user.username }}!</p>
+        {% if has_team %}
+        <div class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg inline-block shadow-lg">
+            <p class="text-lg font-semibold">You are assigned to Team {{ user_team }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Spinning Wheel Container -->
+    <div class="relative mb-8">
+        <!-- Wheel using Canvas -->
+        <canvas id="wheelCanvas" width="500" height="500" class="mx-auto rounded-full shadow-2xl"></canvas>
+
+        <!-- Pointer Arrow -->
+        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 z-30">
+            <svg width="40" height="50" viewBox="0 0 40 50">
+                <polygon points="20,50 0,0 40,0" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Spin Button -->
+    <div class="text-center mt-6">
+        {% if has_team %}
+        <p class="text-lg text-gray-500 font-semibold">You have already been assigned to a team</p>
+        {% else %}
+        <button id="spinButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition duration-300">
+            SPIN
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Result Display -->
+    <div id="result" class="mt-8 text-3xl font-bold text-center hidden">
+        <div class="bg-white rounded-xl p-6 shadow-2xl border-4 border-blue-600">
+            <span id="resultText" class="text-blue-900"></span>
+        </div>
+    </div>
+</div>
+
+<style>
+    #wheel {
+        transition: transform 4s cubic-bezier(0.23, 1, 0.320, 1);
+    }
+    
+    .spinning {
+        animation: spin 4s cubic-bezier(0.23, 1, 0.320, 1) forwards;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(var(--spin-rotation, 1800deg)); }
+    }
+</style>
+
+<script>
+    let isSpinning = false;
+    let currentRotation = 0;
+    let angularVelocity = 0;
+    let isDragging = false;
+    let lastAngle = 0;
+    let lastTime = 0;
+    const hasTeam = {{ has_team|yesno:"true,false" }};
+    const userTeam = {{ user_team|default:"null" }};
+
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+    const result = document.getElementById('result');
+    const resultText = document.getElementById('resultText');
+
+    // Blue and white color scheme - will be populated with available teams
+    let segments = [];
+    let numSegments = 0;
+    let segmentAngle = 0;
+
+    // Color palette for teams
+    const colors = ['#1e40af', '#ffffff', '#3b82f6', '#ffffff', '#60a5fa', '#ffffff'];
+
+    // Load available teams from server
+    async function loadAvailableTeams() {
+        try {
+            const response = await fetch('/get-available-teams/');
+            const data = await response.json();
+
+            if (data.all_full) {
+                resultText.textContent = 'All teams are full!';
+                result.classList.remove('hidden');
+                canvas.style.opacity = '0.5';
+                return false;
+            }
+
+            // Build segments from available teams
+            segments = data.available_teams.map((team, index) => ({
+                number: team.number,
+                name: team.name,
+                color: colors[index % colors.length],
+                capacity: team.capacity,
+                current: team.current,
+                available: team.available
+            }));
+
+            numSegments = segments.length;
+            segmentAngle = (2 * Math.PI) / numSegments;
+
+            return true;
+        } catch (error) {
+            console.error('Error loading teams:', error);
+            return false;
+        }
+    }
+
+    // Create audio context for sound effects
+    let audioContext;
+
+    function initAudio() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // Play tick sound
+    function playTick() {
+        if (!audioContext) return;
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.05);
+
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.05);
+    }
+
+    // Draw the wheel
+    function drawWheel() {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 220;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw outer ring
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius + 20, 0, 2 * Math.PI);
+        ctx.fillStyle = '#1e40af';
+        ctx.fill();
+
+        // Save context for rotation
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(currentRotation * Math.PI / 180);
+
+        // Draw segments
+        for (let i = 0; i < numSegments; i++) {
+            const startAngle = i * segmentAngle;
+            const endAngle = (i + 1) * segmentAngle;
+
+            // Draw segment
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, radius, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fillStyle = segments[i].color;
+            ctx.fill();
+            ctx.strokeStyle = '#1e40af';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Draw segment text
+            const textAngle = startAngle + segmentAngle / 2;
+            const textX = Math.cos(textAngle) * (radius * 0.7);
+            const textY = Math.sin(textAngle) * (radius * 0.7);
+
+            ctx.save();
+            ctx.translate(textX, textY);
+            ctx.rotate(textAngle + Math.PI / 2);
+            ctx.fillStyle = segments[i].color === '#ffffff' ? '#1e40af' : '#ffffff';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(segments[i].name, 0, 0);
+            ctx.restore();
+        }
+
+        // Draw center circle
+        ctx.beginPath();
+        ctx.arc(0, 0, 40, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#1e40af';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Draw center dot
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = '#1e40af';
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // Get the segment at the top (12 o'clock position)
+    function getSegmentAtTop() {
+        const topAngle = -90;
+        const adjustedAngle = (topAngle - currentRotation) % 360;
+        const normalizedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
+        const segmentIndex = Math.floor(normalizedAngle / (360 / numSegments));
+        return segmentIndex % numSegments;
+    }
+
+    // Get angle from center to mouse position
+    function getAngle(x, y) {
+        const rect = canvas.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        return Math.atan2(y - centerY, x - centerX) * 180 / Math.PI;
+    }
+
+    // Function to save team assignment
+    function saveTeamAssignment(teamNumber) {
+        fetch('/assign-team/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                team_number: teamNumber
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Team assigned successfully:', data.team);
+            } else {
+                console.error('Failed to assign team:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error assigning team:', error);
+        });
+    }
+
+    // Get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Button click handler
+    function handleSpinButtonClick() {
+        if (isSpinning || hasTeam) return;
+
+        initAudio();
+        result.classList.add('hidden');
+
+        // Random initial velocity for the spin
+        angularVelocity = 20 + Math.random() * 10; // Random speed between 20-30
+
+        startSpinAnimation();
+    }
+
+    // Spin animation with physics
+    function startSpinAnimation() {
+        isSpinning = true;
+        const friction = 0.98;
+        const minVelocity = 0.5;
+        let lastSegment = -1;
+
+        function animate() {
+            angularVelocity *= friction;
+            currentRotation += angularVelocity;
+
+            // Play tick sound when crossing segments
+            const currentSegment = getSegmentAtTop();
+            if (currentSegment !== lastSegment && Math.abs(angularVelocity) > 1) {
+                playTick();
+                lastSegment = currentSegment;
+            }
+
+            drawWheel();
+
+            if (Math.abs(angularVelocity) > minVelocity) {
+                requestAnimationFrame(animate);
+            } else {
+                // Final result
+                const winningSegmentIndex = getSegmentAtTop();
+                const winningSegment = segments[winningSegmentIndex];
+                const winningTeamNumber = winningSegment.number; // Use the actual team number
+
+                resultText.textContent = `You have been assigned to ${winningSegment.name}!`;
+                result.classList.remove('hidden');
+
+                // Save team assignment to database
+                saveTeamAssignment(winningTeamNumber);
+
+                isSpinning = false;
+                angularVelocity = 0;
+
+                // Reload page after 3 seconds to show the assigned team
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            }
+        }
+
+        animate();
+    }
+
+    // Initial setup
+    async function init() {
+        // Load available teams
+        const teamsLoaded = await loadAvailableTeams();
+
+        if (!teamsLoaded || hasTeam) {
+            canvas.style.opacity = '0.6';
+        }
+
+        // Draw the wheel
+        drawWheel();
+
+        // Add spin button event listener
+        const spinButton = document.getElementById('spinButton');
+        if (spinButton && !hasTeam) {
+            spinButton.addEventListener('click', handleSpinButtonClick);
+        }
+    }
+
+    // Start the app
+    init();
+</script>
+{% endblock %}

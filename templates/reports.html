@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Reports{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white p-6">
+    <!-- Header -->
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
+            <div>
+                <h1 class="text-3xl font-normal text-gray-800">Team Assignment Reports</h1>
+                <p class="text-sm text-gray-600 mt-1">View all users and their team assignments</p>
+            </div>
+            <a href="{% url 'logout' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 transition-colors duration-150 font-semibold text-sm">
+                Sign out
+            </a>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white border border-gray-200 shadow-sm p-6">
+                <h3 class="text-gray-600 text-xs font-normal uppercase mb-2">Total Users</h3>
+                <p class="text-3xl font-light text-gray-800">{{ total_users }}</p>
+            </div>
+            <div class="bg-white border border-gray-200 shadow-sm p-6">
+                <h3 class="text-gray-600 text-xs font-normal uppercase mb-2">Assigned Users</h3>
+                <p class="text-3xl font-light text-gray-800">{{ assigned_users }}</p>
+            </div>
+            <div class="bg-white border border-gray-200 shadow-sm p-6">
+                <h3 class="text-gray-600 text-xs font-normal uppercase mb-2">Unassigned Users</h3>
+                <p class="text-3xl font-light text-gray-800">{{ unassigned_users }}</p>
+            </div>
+        </div>
+
+        <!-- Teams Section -->
+        <div class="bg-white border border-gray-200 shadow-sm p-8 mb-8">
+            <h2 class="text-xl font-normal text-gray-800 mb-6">Teams Overview</h2>
+
+            {% if teams %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for team_number, members in teams.items %}
+                        <div class="bg-gray-50 border border-gray-200 p-5">
+                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                                <h3 class="text-lg font-normal text-gray-800">Team {{ team_number }}</h3>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-sm text-gray-600">
+                                        {{ members|length }}/{% if team_number == 1 %}{{ team_capacities.1 }}{% elif team_number == 2 %}{{ team_capacities.2 }}{% elif team_number == 3 %}{{ team_capacities.3 }}{% elif team_number == 4 %}{{ team_capacities.4 }}{% elif team_number == 5 %}{{ team_capacities.5 }}{% elif team_number == 6 %}{{ team_capacities.6 }}{% endif %} members
+                                    </span>
+                                    {% if team_number == 1 and members|length >= team_capacities.1 %}
+                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
+                                    {% elif team_number == 2 and members|length >= team_capacities.2 %}
+                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
+                                    {% elif team_number == 3 and members|length >= team_capacities.3 %}
+                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
+                                    {% elif team_number == 4 and members|length >= team_capacities.4 %}
+                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
+                                    {% elif team_number == 5 and members|length >= team_capacities.5 %}
+                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
+                                    {% elif team_number == 6 and members|length >= team_capacities.6 %}
+                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                {% for profile in members %}
+                                    <div class="bg-white border border-gray-200 p-3">
+                                        <p class="text-sm font-normal text-gray-800">{{ profile.user.username }}</p>
+                                        {% if profile.assigned_at %}
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                {{ profile.assigned_at|date:"M d, Y H:i" }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-600 text-sm">No teams have been assigned yet.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Unassigned Users Section -->
+        {% if unassigned %}
+            <div class="bg-white border border-gray-200 shadow-sm p-8 mb-8">
+                <h2 class="text-xl font-normal text-gray-800 mb-6">Unassigned Users</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {% for profile in unassigned %}
+                        <div class="bg-gray-50 border border-gray-200 p-4">
+                            <p class="text-sm font-normal text-gray-800">{{ profile.user.username }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Not yet assigned</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- All Users Table -->
+        <div class="bg-white border border-gray-200 shadow-sm p-8">
+            <h2 class="text-xl font-normal text-gray-800 mb-6">All Users</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-normal text-gray-600 uppercase tracking-wider">
+                                Username
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-normal text-gray-600 uppercase tracking-wider">
+                                Team
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-normal text-gray-600 uppercase tracking-wider">
+                                Assigned Date
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-normal text-gray-600 uppercase tracking-wider">
+                                Status
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for team_number, members in teams.items %}
+                            {% for profile in members %}
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-normal text-gray-800">{{ profile.user.username }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm text-gray-800">
+                                            Team {{ profile.team_number }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                        {% if profile.assigned_at %}
+                                            {{ profile.assigned_at|date:"M d, Y H:i" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-xs text-gray-600">
+                                            Assigned
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for profile in unassigned %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-normal text-gray-800">{{ profile.user.username }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-gray-600">
+                                        Not Assigned
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    -
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-xs text-gray-600">
+                                        Pending
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+</style>
+{% endblock %}

