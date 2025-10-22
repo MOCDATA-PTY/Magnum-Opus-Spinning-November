@@ -51,21 +51,35 @@
     </div>
 
     <!-- Result Display Modal -->
-    <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-2xl p-10 max-w-md mx-4 text-center transform transition-all">
-            <div class="mb-6">
-                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                </div>
-                <h2 class="text-2xl font-normal text-gray-800 mb-2">Congratulations!</h2>
-                <p id="resultText" class="text-lg text-gray-600 mb-6"></p>
-                <p class="text-sm text-gray-500">Your team assignment is now permanent.</p>
+    <div id="resultModal" class="fixed inset-0 bg-gradient-to-br from-blue-900 via-blue-700 to-blue-900 flex items-center justify-center z-50 hidden">
+        <div class="text-center transform transition-all max-w-4xl mx-4 relative">
+            <!-- Celebration Confetti Effect -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
             </div>
-            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 transition-colors duration-150">
-                View Dashboard
-            </button>
+
+            <!-- Main Content -->
+            <div class="relative z-10">
+                <div class="mb-8">
+                    <!-- Trophy Icon -->
+                    <div class="w-40 h-40 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl trophy-bounce">
+                        <svg class="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 00-1.5 1.5v.5h-1a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1v-.5a1.5 1.5 0 011.5-1.5h.5a1 1 0 001-1v-3a1 1 0 00-1-1h-3a1 1 0 01-1-1v-.5a3.5 3.5 0 00-7 0V4a1 1 0 01-1 1H3a1 1 0 00-1 1v3a1 1 0 001 1h.5a1.5 1.5 0 011.5 1.5v.5h1a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-.5a1.5 1.5 0 00-1.5-1.5H2a1 1 0 01-1-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                        </svg>
+                    </div>
+
+                    <h1 class="text-7xl font-bold text-white mb-6 celebration-pulse">🎉 CONGRATULATIONS! 🎉</h1>
+                    <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl p-12 mb-8">
+                        <p id="resultText" class="text-5xl font-bold text-white mb-4"></p>
+                        <p class="text-2xl text-blue-100 mt-6">Your team assignment is now permanent!</p>
+                    </div>
+                    <p class="text-xl text-white opacity-90">Welcome to your new team! 🎊</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -74,14 +88,52 @@
     #wheel {
         transition: transform 4s cubic-bezier(0.23, 1, 0.320, 1);
     }
-    
+
     .spinning {
         animation: spin 4s cubic-bezier(0.23, 1, 0.320, 1) forwards;
     }
-    
+
     @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(var(--spin-rotation, 1800deg)); }
+    }
+
+    /* Celebration Modal Animations */
+    @keyframes confetti-fall {
+        0% { transform: translateY(-100vh) rotate(0deg); }
+        100% { transform: translateY(100vh) rotate(360deg); }
+    }
+
+    .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #fbbf24;
+        animation: confetti-fall 3s linear infinite;
+    }
+
+    .confetti:nth-child(1) { left: 10%; animation-delay: 0s; background: #fbbf24; }
+    .confetti:nth-child(2) { left: 30%; animation-delay: 0.5s; background: #60a5fa; }
+    .confetti:nth-child(3) { left: 50%; animation-delay: 1s; background: #34d399; }
+    .confetti:nth-child(4) { left: 70%; animation-delay: 1.5s; background: #f472b6; }
+    .confetti:nth-child(5) { left: 90%; animation-delay: 2s; background: #a78bfa; }
+
+    @keyframes trophy-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+
+    .trophy-bounce {
+        animation: trophy-bounce 1s ease-in-out infinite;
+    }
+
+    @keyframes celebration-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.9; transform: scale(1.05); }
+    }
+
+    .celebration-pulse {
+        animation: celebration-pulse 1.5s ease-in-out infinite;
     }
 </style>
 
