@@ -6,11 +6,11 @@ class UserProfile(models.Model):
     team_number = models.IntegerField(null=True, blank=True)
     assigned_at = models.DateTimeField(null=True, blank=True)
 
-    # Team capacities: Teams 1-2 have 5 slots, Teams 3-6 have 6 slots
+    # Team capacities: Teams 1-3 have 5 slots, Teams 4-6 have 6 slots
     TEAM_CAPACITIES = {
         1: 5,
         2: 5,
-        3: 6,
+        3: 5,
         4: 6,
         5: 6,
         6: 6

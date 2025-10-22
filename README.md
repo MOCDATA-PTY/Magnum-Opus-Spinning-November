@@ -14,11 +14,11 @@ A Django-based team assignment application with an interactive spinning wheel.
 
 - **Team 1**: 5 members max
 - **Team 2**: 5 members max
-- **Team 3**: 6 members max
+- **Team 3**: 5 members max
 - **Team 4**: 6 members max
 - **Team 5**: 6 members max
 - **Team 6**: 6 members max
-- **Total Capacity**: 34 users
+- **Total Capacity**: 33 users
 
 ## User Accounts
 

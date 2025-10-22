@@ -44,19 +44,11 @@
                                 <h3 class="text-lg font-normal text-gray-800">Team {{ team_number }}</h3>
                                 <div class="flex flex-col items-end">
                                     <span class="text-sm text-gray-600">
-                                        {{ members|length }}/{% if team_number == 1 %}{{ team_capacities.1 }}{% elif team_number == 2 %}{{ team_capacities.2 }}{% elif team_number == 3 %}{{ team_capacities.3 }}{% elif team_number == 4 %}{{ team_capacities.4 }}{% elif team_number == 5 %}{{ team_capacities.5 }}{% elif team_number == 6 %}{{ team_capacities.6 }}{% endif %} members
+                                        {{ members|length }}/{% if team_number <= 3 %}5{% else %}6{% endif %} members
                                     </span>
-                                    {% if team_number == 1 and members|length >= team_capacities.1 %}
+                                    {% if team_number <= 3 and members|length >= 5 %}
                                         <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
-                                    {% elif team_number == 2 and members|length >= team_capacities.2 %}
-                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
-                                    {% elif team_number == 3 and members|length >= team_capacities.3 %}
-                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
-                                    {% elif team_number == 4 and members|length >= team_capacities.4 %}
-                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
-                                    {% elif team_number == 5 and members|length >= team_capacities.5 %}
-                                        <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
-                                    {% elif team_number == 6 and members|length >= team_capacities.6 %}
+                                    {% elif team_number > 3 and members|length >= 6 %}
                                         <span class="text-xs text-red-600 font-semibold mt-1">FULL</span>
                                     {% endif %}
                                 </div>
